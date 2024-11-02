@@ -155,9 +155,12 @@ Before using the build scripts, you may need to update the registry URL and imag
 
 Contributions are welcome! Please submit issues or pull requests to help improve this project.
 
-## License
+## Contact
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE.md) file for details.
+If you have any questions or need further assistance, feel free to reach out:
+
+- **Email**: [maksym.sadovnychyy@gmail.com](mailto:maksym.sadovnychyy@gmail.com)
+- **Reddit**: [Running Podman Inside a Podman Container: A Technical Deep Dive for CI/CD and Kubernetes Microservices](https://www.reddit.com/r/MaksIT/comments/1euiznn/running_podman_inside_a_podman_container_a/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
 
 ### Additional Note: Setting Up Podman API on RHEL-Based Distributions (e.g., Fedora)
 
@@ -194,3 +197,7 @@ If you need to set up the Podman API service to allow remote management of conta
    - Replace `<Your IP>` with the actual IP address of your machine. This command should return information about the Podman service, confirming that the API is accessible.
 
 >**Note** Exposing the Podman API over TCP without proper security (e.g., TLS, authentication) can pose security risks. Make sure to implement appropriate security measures in production environments.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE.md) file for details.
