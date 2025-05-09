@@ -1,11 +1,12 @@
+param(
+    [string]$ContainerRuntime = $containerRuntime
+)
+
 $containerRuntime = "docker"
 
 $registryUrl = "cr.maks-it.com"  # Modify this line to set your registry URL
 $imageName = "library/podman:latest"  # Modify this line to set your desired image name
 
-param(
-    [string]$ContainerRuntime = $containerRuntime
-)
 
 if ($ContainerRuntime -ne "docker" -and $ContainerRuntime -ne "podman") {
     Write-Host "Error: Unsupported container runtime. Use 'docker' or 'podman'." -ForegroundColor Red
@@ -40,9 +41,19 @@ $jsonString | Set-Content -Path $configFile
 & $ContainerRuntime build -t "$registryUrl/$ImageName" -f Dockerfile .
 
 # Push the container image using the generated config.json
-& $ContainerRuntime --config $configFile push "$registryUrl/$ImageName"
+if ($ContainerRuntime -eq "podman") {
+    & podman push --authfile $configFile "$registryUrl/$imageName"
+}
+elseif ($ContainerRuntime -eq "docker") {
+    $dockerConfigDir = "$env:USERPROFILE\.docker"
+    if (-not (Test-Path $dockerConfigDir)) {
+        New-Item -ItemType Directory -Path $dockerConfigDir | Out-Null
+    }
+    Copy-Item -Path $configFile -Destination "$dockerConfigDir\config.json" -Force
+    & docker push "$registryUrl/$imageName"
+}
 
-# Delete the config.json file after the push
+# Cleanup
 Remove-Item -Path $configFile -Force
 
 Write-Host "Build and push completed successfully." -ForegroundColor Green

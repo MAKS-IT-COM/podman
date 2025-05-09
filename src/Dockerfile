@@ -1,32 +1,40 @@
 FROM registry.fedoraproject.org/fedora:40
 
-# Set environment variables for storage configuration
+# Environment for Podman storage
 ENV CONTAINERS_STORAGE_CONF=/etc/containers/storage.conf \
     STORAGE_RUNROOT=/run/containers/storage \
     STORAGE_GRAPHROOT=/var/lib/containers/storage \
     _CONTAINERS_USERNS_CONFIGURED=""
 
-# Install necessary packages
-RUN dnf install -y podman fuse-overlayfs shadow-utils && \
-    dnf clean all
+# Install runtime dependencies (Podman + Python)
+RUN dnf install -y \
+        podman \
+        fuse-overlayfs \
+        shadow-utils \
+        python3 \
+    && dnf clean all
 
-# Set the setuid bit on newuidmap and newgidmap
+# Allow unprivileged user namespaces
 RUN chmod u+s /usr/bin/newuidmap /usr/bin/newgidmap
 
-# Create a non-root user and group with UID/GID 1000
-RUN groupadd -g 1000 podmanuser && \
-    useradd -u 1000 -g podmanuser -m -s /bin/bash podmanuser && \
-    mkdir -p /run/containers/storage /var/lib/containers/storage && \
-    chown -R podmanuser:podmanuser /run/containers/storage /var/lib/containers/storage
+# Create podmanuser with UID/GID 1000 and storage dirs
+RUN groupadd -g 1000 podmanuser \
+ && useradd -u 1000 -g podmanuser -m -s /bin/bash podmanuser \
+ && mkdir -p /run/containers/storage /var/lib/containers/storage /home/podmanuser/workspace \
+ && chown -R podmanuser:podmanuser /run/containers/storage /var/lib/containers/storage /home/podmanuser/workspace 
 
-# Copy the storage.conf file from the host to the container
+# Copy in your host storage.conf
 COPY storage.conf /etc/containers/storage.conf
 
-# Switch to the non-root user
+# Create minimal health-check server script
+COPY healthz.py /home/podmanuser/healthz.py
+RUN chown podmanuser:podmanuser /home/podmanuser/healthz.py
+
+# Switch to non-root user
 USER podmanuser
 
-# Create a volume for persistent storage if needed
-# VOLUME /home/podmanuser/.local/share/containers/storage
+# Expose port for Kubernetes probes
+EXPOSE 8080
 
-# Run an infinite sleep to keep the container running
-CMD ["sleep", "infinity"]
+# Launch health-check server
+CMD ["python3", "/home/podmanuser/healthz.py"]
